@@ -1,0 +1,85 @@
+-- Tabla de Personas (Base para clientes y entrenadores)
+CREATE TABLE Persona (
+    id_persona SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(100) UNIQUE NOT NULL,
+    telefono VARCHAR(15)
+);
+
+-- Tabla de Membresías
+CREATE TABLE Membresias (
+    id_membresia SERIAL PRIMARY KEY,
+    tipo VARCHAR(50) UNIQUE NOT NULL,
+    precio DECIMAL(10,2) NOT NULL CHECK (precio > 0),
+    duracion INTERVAL NOT NULL  -- Ejemplo: '1 month', '3 months', '1 year'
+);
+
+-- Tabla de Usuarios (Clientes)
+CREATE TABLE Usuarios (
+    id_usuario SERIAL PRIMARY KEY,
+    id_persona INT UNIQUE REFERENCES Persona(id_persona) ON DELETE CASCADE,
+    id_membresia INT REFERENCES Membresias(id_membresia) ON DELETE SET NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de Entrenadores
+CREATE TABLE Entrenadores (
+    id_entrenador SERIAL PRIMARY KEY,
+    id_persona INT UNIQUE REFERENCES Persona(id_persona) ON DELETE CASCADE,
+    especialidad VARCHAR(100)
+);
+
+
+-- Tabla de Clases
+CREATE TABLE Clases (
+                        id_clase SERIAL PRIMARY KEY,
+                        nombre VARCHAR(100) NOT NULL,
+                        capacidad_maxima INT CHECK (capacidad_maxima > 0),
+                        duracion INTERVAL NOT NULL,
+                        id_entrenador INT REFERENCES Entrenadores(id_entrenador) ON DELETE SET NULL
+);
+
+-- Tabla de Horarios
+CREATE TABLE Horarios (
+                          id_horario SERIAL PRIMARY KEY,
+                          id_clase INT REFERENCES Clases(id_clase) ON DELETE CASCADE,
+                          dia_semana VARCHAR(10) CHECK (dia_semana IN ('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo')),
+                          hora_inicio TIME NOT NULL,
+                          hora_fin TIME NOT NULL CHECK (hora_fin > hora_inicio)
+);
+
+-- Tabla de Reservas
+CREATE TABLE Reservas (
+                          id_reserva SERIAL PRIMARY KEY,
+                          id_usuario INT REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+                          id_horario INT REFERENCES Horarios(id_horario) ON DELETE CASCADE,
+                          fecha_reserva TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                          estado VARCHAR(20) CHECK (estado IN ('Pendiente', 'Confirmada', 'Cancelada'))
+);
+
+
+-- Pagos
+CREATE TABLE Pagos (
+                       id_pago SERIAL PRIMARY KEY,
+                       id_usuario INT REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+                       monto DECIMAL(10,2) NOT NULL CHECK (monto > 0),
+                       fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       metodo_pago VARCHAR(50) CHECK (metodo_pago IN ('Efectivo', 'Tarjeta', 'Transferencia'))
+);
+
+-- Asistencias
+CREATE TABLE Asistencias (
+                             id_asistencia SERIAL PRIMARY KEY,
+                             id_reserva INT REFERENCES Reservas(id_reserva) ON DELETE CASCADE,
+                             fecha_asistencia TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Feedback de los usuarios sobre las clases
+CREATE TABLE Feedback (
+                          id_feedback SERIAL PRIMARY KEY,
+                          id_usuario INT REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+                          id_clase INT REFERENCES Clases(id_clase) ON DELETE CASCADE,
+                          calificacion INT CHECK (calificacion BETWEEN 1 AND 5),
+                          comentario TEXT,
+                          fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

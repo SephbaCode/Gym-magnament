@@ -1,0 +1,8 @@
+INSERT INTO membresias (tipo, nombre, precio, duracion)
+VALUES
+    ('Mensual', 'Bronce', 15.00, '1 month'),  -- Membresía Bronce de tipo mensual
+    ('Mensual', 'Plata', 25.00, '1 month'),   -- Membresía Plata de tipo mensual
+    ('Anual', 'Oro', 200.00, '1 year'),       -- Membresía Oro de tipo anual
+    ('Trimestral', 'Plata', 50.00, '3 months'), -- Membresía Plata de tipo trimestral
+    ('Semestral', 'Bronce', 120.00, '6 months 15 days'), -- Membresía Bronce de tipo semestral
+    ('Bienal', 'Oro', 350.00, '2 years');      -- Membresía Oro de tipo bienal
