@@ -50,6 +50,8 @@ class ViewMain(QMainWindow, AppLogic):
         super(ViewMain, self).__init__()
         loadUi(r"src\Ui\model2.ui", self)
         
+        self.mPagos.setCurrentIndex(0)
+
         #Elementos Busqueda cliente
         self.btnSearchClient.clicked.connect(self.searchClients)
         
