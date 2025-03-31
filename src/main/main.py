@@ -1,6 +1,8 @@
 import psycopg2
 from PyQt5.QtWidgets import QTableWidgetItem, QMainWindow, QApplication, QMessageBox, QVBoxLayout
 from PyQt5.uic import loadUi
+from PyQt5.QtGui import QIcon
+
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -21,7 +23,6 @@ class AppLogic():
                 port="5432",
                 client_encoding="UTF8"
             )
-            print("Conexión exitosa")
             return connection
         except Exception as e:
             print(f"Error al conectar a la base de datos: {e}")
@@ -32,16 +33,21 @@ class AppLogic():
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, params)
-            return cursor.fetchall()
+            # Si la consulta es un SELECT, obtenemos los resultados
+            if query.strip().lower().startswith("select"):
+                return cursor.fetchall()
+            else:
+                self.connection.commit()  # Guarda los cambios en la base de datos
+                return True  # Retorna True si la operación fue exitosa
+
         except Exception as e:
             print(f"Error al ejecutar la consulta: {e}")
-            return []
+            return False  # Retorna False en caso de error
         
     def closeEvent(self, event):
         """Cerrar la conexión al cerrar la ventana"""
         if self.connection:
             self.connection.close()
-            print("Conexión cerrada")
         event.accept()
     
 
@@ -50,6 +56,10 @@ class ViewMain(QMainWindow, AppLogic):
         super(ViewMain, self).__init__()
         loadUi(r"src\Ui\model2.ui", self)
         
+        self.setWindowIcon(QIcon(r"src\Ui\ico.png"))
+
+        
+        # pagina por default
         self.mPagos.setCurrentIndex(0)
 
         #Elementos Busqueda cliente
@@ -67,9 +77,14 @@ class ViewMain(QMainWindow, AppLogic):
         self.tblDetalles.setColumnWidth(4, 200)
         self.tblDetalles.setColumnWidth(5, 200)
         
-        
+        # elementos de la conexion
         self.connection = self.create_connection()
         self.loadClientData()
+        
+        # boton se activara cuando se seleccione un elemento de la lista
+        self.ventanaMembresia = None  
+        self.btnContratar.setDisabled(True)
+        self.btnContratar.clicked.connect(self.asignMembership)
         
         self.tblClientes.cellClicked.connect(self.showDetails)
         
@@ -77,8 +92,6 @@ class ViewMain(QMainWindow, AppLogic):
         self.btnSaveClient.clicked.connect(self.regiterNewClient)
         self.btnCleanClient.clicked.connect(self.cleanClientData)
         
-        #obtener membresias en el combobox
-        self.loadMembresias()
         
         #graficos
         self.frmPlotMPagos.setLayout(QVBoxLayout())  # Establecer un layout vertical en el frame
@@ -122,6 +135,14 @@ class ViewMain(QMainWindow, AppLogic):
         """Obtiene el dato de la primera columna de la fila seleccionada"""
         id_dato = self.tblClientes.item(row, 0).text()  # Primera columna (ID)
         self.loadClientDetails(id_dato)
+        self.btnContratar.setEnabled(True)
+        
+    def asignMembership(self):
+        if self.ventanaMembresia is None or not self.ventanaMembresia.isVisible():
+            idCliente = self.tblClientes.item(self.tblClientes.currentRow(), 0).text()
+            self.ventanaMembresia = AsignarMembresiaView(idCliente)
+            self.ventanaMembresia.show()
+        
         
     def loadClientDetails(self, id_persona):
         #consulta para obtener los datos de una persona
@@ -206,18 +227,6 @@ class ViewMain(QMainWindow, AppLogic):
         self.lnTelefono.setText("")
         self.lnCorreo.setText("")
         
-    def loadMembresias(self):
-        sqlquery = "select concat(nombre ,' - ' , tipo, ' - ' , precio ) from membresias"
-        membresias = self.execute_query(sqlquery)
-        
-
-        # Verificar si hay resultados antes de iterar
-        if membresias:
-            self.cmbMembresias.clear()
-            for membresia in membresias:
-                self.cmbMembresias.addItem(membresia[0])
-        else:
-            print("No hay membresías disponibles.")
         
     def mostrar_mensaje(self, titulo, mensaje):
         msg = QMessageBox()
@@ -340,6 +349,63 @@ class ViewMain(QMainWindow, AppLogic):
         
         # Dibujar el gráfico en el canvas
         self.canvas.draw()
+        
+class AsignarMembresiaView(QMainWindow, AppLogic):
+    def __init__(self, id_cliente):
+        super(AsignarMembresiaView, self).__init__()
+        loadUi(r"src\Ui\asigMembre.ui", self)
+        
+        self.setWindowIcon(QIcon(r"src\Ui\ico.png"))
+
+        # coneccion 
+        self.connection = self.create_connection()
+        
+        # Conectar el botón de asignar membresía a la función correspondiente
+        self.btnAsignar.clicked.connect(self.asignar_membresia)
+        self.id_cliente = id_cliente
+        self.lbNombre.setText("Cliente: " + self.getClientName())
+        
+        self.fillMemberships()
+        
+        self.btnCancelar.clicked.connect(self.close)
+    
+        
+    def getClientName(self):
+        # consulta sql patar obtener el nombre del cliente mediante id_cliente de la base de datos
+        query = """SELECT nombre FROM persona WHERE id_persona = %s;"""
+        result = self.execute_query(query, (self.id_cliente,))
+        if result:
+            return str(result[0][0])
+        else:
+            return "Error, no se encontró el cliente."
+        
+    def fillMemberships(self):
+        sqlquery = "select concat(nombre ,' - ' , tipo, ' - ' , precio ) from membresias"
+        membresias = self.execute_query(sqlquery)
+
+        # Verificar si hay resultados antes de iterar
+        if membresias:
+            self.cmbMembresias.clear()
+            for membresia in membresias:
+                self.cmbMembresias.addItem(membresia[0])
+        else:
+            print("No hay membresías disponibles.")
+    
+    def asignar_membresia(self):
+        query = """INSERT INTO persona_x_membresia (id_persona, id_membresia, fecha_registro)
+                VALUES (%s, %s, CURRENT_DATE);"""
+        
+        self.execute_query(query, (self.id_cliente, self.cmbMembresias.currentIndex() + 3))
+        self.mostrar_mensaje("Membresía asignada", "La membresía fue asignada exitosamente.")
+        self.close()     
+     
+    def mostrar_mensaje(self, titulo, mensaje):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle(titulo)
+        msg.setText(mensaje)
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec_()   
 
 # aplicación principal
 if __name__ == "__main__":

@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="tab_bienvenida">
     <attribute name="title">
@@ -49,29 +49,6 @@
      </property>
      <property name="alignment">
       <set>Qt::AlignHCenter|Qt::AlignTop</set>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_7">
-     <property name="geometry">
-      <rect>
-       <x>-20</x>
-       <y>460</y>
-       <width>931</width>
-       <height>91</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>48</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Sistema de Gestión</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
      </property>
     </widget>
    </widget>
@@ -191,6 +168,19 @@
        <string>Duración</string>
       </property>
      </column>
+    </widget>
+    <widget class="QPushButton" name="btnContratar">
+     <property name="geometry">
+      <rect>
+       <x>664</x>
+       <y>40</y>
+       <width>151</width>
+       <height>23</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Asignar membresía</string>
+     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="registerClient">
@@ -358,36 +348,6 @@
        </layout>
       </item>
      </layout>
-    </widget>
-    <widget class="QComboBox" name="cmbMembresias">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>340</y>
-       <width>551</width>
-       <height>22</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_6">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>290</y>
-       <width>241</width>
-       <height>41</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Membresía</string>
-     </property>
     </widget>
    </widget>
    <widget class="QWidget" name="tab">
